@@ -1,0 +1,501 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wooden Crate Inspection List</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-hover: #172554;
+            --success: #15803d;
+            --success-hover: #166534;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f1f5f9;
+            color: var(--gray-800);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+        /* TWO-COLUMN WORKBENCH LAYOUT */
+        .app-layout {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+        /* FIXED LEFT SIDEBAR CONTROLS */
+        .sidebar {
+            width: 320px;
+            background: white;
+            border-right: 1px solid var(--gray-200);
+            padding: 24px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+            z-index: 10;
+            overflow-y: auto;
+        }
+        .sidebar-header {
+            border-bottom: 2px solid var(--gray-200);
+            padding-bottom: 10px;
+            margin-bottom: 4px;
+        }
+        .sidebar h1 {
+            font-size: 15pt;
+            color: var(--primary);
+            margin: 0 0 4px 0;
+            font-weight: 700;
+        }
+        .author-tag {
+            font-size: 8.5pt;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-weight: 600;
+            margin: 0;
+        }
+        /* MAIN RIGHT CONTENT AREA */
+        .main-content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            background-color: #f8fafc;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        label {
+            font-weight: 600;
+            font-size: 9.5pt;
+            color: var(--gray-700);
+        }
+        input[type="text"], input[type="number"], input[type="date"], textarea, select {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 14px;
+            background: #fff;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: 2px solid var(--primary);
+            border-color: transparent;
+        }
+        /* ACTION BUTTONS */
+        .btn-action {
+            display: block;
+            width: 100%;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            text-align: center;
+        }
+        .btn-pass-all {
+            background: var(--success);
+            margin-top: 5px;
+        }
+        .btn-pass-all:hover { background: var(--success-hover); }
+        .btn-print {
+            background: var(--primary);
+            font-size: 15px;
+            margin-top: auto;
+            padding: 14px;
+        }
+        .btn-print:hover { background: var(--primary-hover); }
+        /* INTERACTIVE CARDS (RIGHT SIDE) */
+        .crate-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--gray-200);
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .crate-card h3 {
+            margin: 0 0 12px 0;
+            font-size: 14pt;
+            color: var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .checklist-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            margin-bottom: 12px;
+        }
+        .checklist-table th, .checklist-table td {
+            border: 1px solid var(--gray-200);
+            padding: 8px 10px;
+            text-align: left;
+            font-size: 9.5pt;
+        }
+        .checklist-table th { background-color: var(--gray-100); }
+
+        /* THIS ONLY HIDES THE TABLE ON SCREEN, IT WILL STILL PRINT */
+        @media screen {
+            .collapsed-view { display: none !important; }
+        }
+
+        #print-area { display: none; }
+        /* PRINT STYLING FOR DUAL-COPY SPLIT A4 / LETTER SHEET */
+        @page {
+            size: portrait;
+            margin: 0;
+        }
+        @media print {
+            body { height: auto; overflow: visible; background: white; }
+            .no-print { display: none !important; }
+            #print-area { display: block !important; }
+            
+            .print-page {
+                page-break-after: always;
+                box-sizing: border-box;
+                padding: 8mm 12mm;
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+            .print-page:last-child { page-break-after: avoid; }
+            .half-copy {
+                height: 48%;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                position: relative;
+            }
+            .copy-badge {
+                float: right;
+                font-size: 9pt;
+                font-weight: bold;
+                text-transform: uppercase;
+                background: #e2e8f0;
+                padding: 3px 10px;
+                border: 1px solid #000;
+                border-radius: 3px;
+            }
+            .print-header {
+                border-bottom: 2px solid #000;
+                padding-bottom: 6px;
+            }
+            .print-header h2 {
+                font-size: 13pt;
+                margin: 0;
+                display: inline-block;
+            }
+            .print-meta-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 6px;
+                background: #f8fafc;
+                padding: 8px;
+                border: 1px solid #000;
+                font-size: 9.5pt;
+            }
+            .checklist-table {
+                flex-grow: 1;
+                margin: 6px 0;
+            }
+            .checklist-table th, .checklist-table td {
+                border: 1px solid #000;
+                padding: 7px 8px;
+                font-size: 9pt;
+            }
+            .notes-block { font-size: 9pt; }
+            .notes-line {
+                border-bottom: 1px dotted #000;
+                min-height: 28px;
+                margin-top: 4px;
+            }
+            .cut-line {
+                border-top: 2px dashed #444;
+                text-align: center;
+                margin: 4px 0;
+                position: relative;
+                height: 0;
+            }
+            .cut-line-text {
+                position: absolute;
+                top: -10px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #fff;
+                padding: 0 12px;
+                font-size: 8.5pt;
+                font-weight: bold;
+                color: #444;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- SCREEN WORKBENCH INTERFACE -->
+    <div class="app-layout no-print">
+        <!-- FIXED LEFT SIDEBAR CONTROLS -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>Wooden Crate Inspection</h1>
+                <p class="author-tag">written by F.Morales</p>
+            </div>
+            <div class="form-group">
+                <label for="input-inspector">Inspector Name</label>
+                <input type="text" id="input-inspector" placeholder="e.g. John Doe">
+            </div>
+            <div class="form-group">
+                <label for="input-order">Order Number</label>
+                <input type="text" id="input-order" value="8071349078">
+            </div>
+            <div class="form-group">
+                <label for="input-date">Inspection Date</label>
+                <input type="date" id="input-date">
+            </div>
+            <div class="form-group">
+                <label for="input-qty">Number of Crates in Batch</label>
+                <select id="input-qty" onchange="updateCrateCount()"></select>
+            </div>
+            <button class="btn-action btn-pass-all" onclick="passAllCheckpoints()">✔ Pass All Checkpoints</button>
+            <button class="btn-action btn-print" onclick="window.print()">Print Dual-Copy Sheets</button>
+        </div>
+        <!-- SCROLLABLE RIGHT INSPECTION CARDS -->
+        <div class="main-content">
+            <div id="crate-cards-wrapper"></div>
+        </div>
+    </div>
+    <!-- ON-DEMAND PRINT AREA -->
+    <div id="print-area"></div>
+
+    <script>
+        const checkItems = [
+            "1. Outer Crate Integrity: Check wood for cracks, punctures, or structural damage.",
+            "2. Security Seals: Verify tamper-evident seals are intact and match documents.",
+            "3. Shock/Tilt Sensors: Inspect external indicators (ShockWatch) haven't tripped.",
+            "4. Internal Hardware: Confirm rack/components are secured & motionless.",
+            "5. Moisture Check: Ensure no water damage, dampness, or broken vapor seals."
+        ];
+
+        let isCollapsed = false;
+
+        // Populate Dropdown
+        const qtySelect = document.getElementById('input-qty');
+        for (let i = 1; i <= 50; i++) {
+            let opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = i;
+            qtySelect.appendChild(opt);
+        }
+        document.getElementById('input-date').valueAsDate = new Date();
+
+        function updateCrateCount() {
+            const qty = parseInt(document.getElementById('input-qty').value) || 1;
+            const wrapper = document.getElementById('crate-cards-wrapper');
+            const currentCount = wrapper.children.length;
+
+            if (qty > currentCount) {
+                for (let i = currentCount + 1; i <= qty; i++) {
+                    const card = document.createElement('div');
+                    card.className = 'crate-card';
+                    card.id = `crate-card-${i}`;
+
+                    let rowsHtml = checkItems.map((item, idx) => `
+                        <tr>
+                            <td style="text-align: center; width: 60px;">
+                                <label><input type="radio" name="status-${i}-${idx}" value="Pass"> Pass</label>
+                            </td>
+                            <td style="text-align: center; width: 60px;">
+                                <label><input type="radio" name="status-${i}-${idx}" value="Fail"> Fail</label>
+                            </td>
+                            <td>${item}</td>
+                        </tr>
+                    `).join('');
+
+                    card.innerHTML = `
+                        <h3>
+                            <span>Crate #${i} Inspection</span>
+                        </h3>
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label>Crate LPN:</label>
+                            <input type="text" class="lpn-input" placeholder="e.g. NL7830091245" oninput="autoIncrementLPNs(${i})">
+                        </div>
+                        <table class="checklist-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 60px; text-align: center;">Pass</th>
+                                    <th style="width: 60px; text-align: center;">Fail</th>
+                                    <th>Inspection Item Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rowsHtml}
+                            </tbody>
+                        </table>
+                        <div class="form-group notes-group">
+                            <label>Notes & Remarks:</label>
+                            <textarea class="notes-input" rows="2" placeholder="Optional notes..."></textarea>
+                        </div>
+                    `;
+                    wrapper.appendChild(card);
+
+                    if (isCollapsed) {
+                        card.querySelector('.checklist-table').classList.add('collapsed-view');
+                        card.querySelector('.notes-group').classList.add('collapsed-view');
+                        card.querySelectorAll('input[type="radio"][value="Pass"]').forEach(r => r.checked = true);
+                    }
+                }
+                autoIncrementLPNs(1);
+            } else if (qty < currentCount) {
+                while (wrapper.children.length > qty) {
+                    wrapper.removeChild(wrapper.lastElementChild);
+                }
+            }
+        }
+
+        function passAllCheckpoints() {
+            isCollapsed = !isCollapsed;
+            const btn = document.querySelector('.btn-pass-all');
+            const tables = document.querySelectorAll('.checklist-table');
+            const notes = document.querySelectorAll('.notes-group');
+
+            if (isCollapsed) {
+                document.querySelectorAll('input[type="radio"][value="Pass"]').forEach(radio => radio.checked = true);
+                tables.forEach(t => t.classList.add('collapsed-view'));
+                notes.forEach(n => n.classList.add('collapsed-view'));
+                
+                btn.innerHTML = '✎ Show Checklists';
+                btn.style.backgroundColor = 'var(--gray-700)';
+            } else {
+                tables.forEach(t => t.classList.remove('collapsed-view'));
+                notes.forEach(n => n.classList.remove('collapsed-view'));
+                
+                btn.innerHTML = '✔ Pass All Checkpoints';
+                btn.style.backgroundColor = 'var(--success)';
+            }
+        }
+
+        function autoIncrementLPNs(changedIndex) {
+            if (changedIndex !== 1) return;
+            const inputs = document.querySelectorAll('.lpn-input');
+            if (inputs.length === 0) return;
+            const baseValue = inputs[0].value.trim();
+            if (!baseValue) return;
+
+            const match = baseValue.match(/^(.*?)(\d+)$/);
+            if (match) {
+                const prefix = match[1];
+                const startNum = match[2];
+                const numLength = startNum.length;
+                let currentNum = parseInt(startNum, 10);
+
+                for (let i = 1; i < inputs.length; i++) {
+                    currentNum++;
+                    const paddedNum = String(currentNum).padStart(numLength, '0');
+                    inputs[i].value = prefix + paddedNum;
+                }
+            }
+        }
+
+        function buildCopyHtml(typeLabel, orderNum, inspector, dateVal, lpnValue, sheetIndex, totalSheets, printRowsHtml, notesValue) {
+            return `
+                <div class="half-copy">
+                    <div class="print-header">
+                        <span class="copy-badge">${typeLabel}</span>
+                        <h2>WOODEN CRATE INSPECTION LIST</h2>
+                    </div>
+                    
+                    <div class="print-meta-grid">
+                        <div><strong>Order #:</strong> ${orderNum}</div>
+                        <div><strong>Inspector:</strong> ${inspector}</div>
+                        <div><strong>Date:</strong> ${dateVal}</div>
+                        <div><strong>LPN:</strong> ${lpnValue}</div>
+                        <div style="grid-column: span 2;"><strong>Unit:</strong> ${sheetIndex} of ${totalSheets}</div>
+                    </div>
+                    <table class="checklist-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 45px; text-align: center;">Pass</th>
+                                <th style="width: 45px; text-align: center;">Fail</th>
+                                <th>Inspection Item Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${printRowsHtml}
+                        </tbody>
+                    </table>
+                    <div class="notes-block">
+                        <strong>Notes & Remarks:</strong> ${notesValue}
+                        <div class="notes-line"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.addEventListener('beforeprint', function() {
+            const inspector = document.getElementById('input-inspector').value || '__________________';
+            const orderNum = document.getElementById('input-order').value || '__________________';
+            const dateVal = document.getElementById('input-date').value || new Date().toISOString().split('T')[0];
+            const cards = document.querySelectorAll('.crate-card');
+            const printArea = document.getElementById('print-area');
+            
+            printArea.innerHTML = '';
+
+            cards.forEach((card, index) => {
+                const lpnValue = card.querySelector('.lpn-input').value || 'NL________________';
+                const notesValue = card.querySelector('.notes-input').value || '';
+                
+                let printRowsHtml = checkItems.map((item, idx) => {
+                    const selected = card.querySelector(`input[name="status-${index + 1}-${idx}"]:checked`)?.value;
+                    const passChecked = selected === 'Pass' ? '<b>[X]</b>' : '[ ]';
+                    const failChecked = selected === 'Fail' ? '<b>[X]</b>' : '[ ]';
+                    return `
+                        <tr>
+                            <td style="text-align: center; width: 45px;">${passChecked}</td>
+                            <td style="text-align: center; width: 45px;">${failChecked}</td>
+                            <td>${item}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                const crateCopy = buildCopyHtml('CRATE COPY', orderNum, inspector, dateVal, lpnValue, index + 1, cards.length, printRowsHtml, notesValue);
+                const officeCopy = buildCopyHtml('OFFICE RECORD', orderNum, inspector, dateVal, lpnValue, index + 1, cards.length, printRowsHtml, notesValue);
+
+                const pageHtml = `
+                    <div class="print-page">
+                        ${crateCopy}
+                        <div class="cut-line">
+                            <span class="cut-line-text">✂ CUT HERE FOR OFFICE / CRATE COPIES ✂</span>
+                        </div>
+                        ${officeCopy}
+                    </div>
+                `;
+                printArea.innerHTML += pageHtml;
+            });
+        });
+
+        window.addEventListener('afterprint', function() {
+            document.getElementById('print-area').innerHTML = '';
+        });
+
+        updateCrateCount();
+    </script>
+</body>
+</html>
