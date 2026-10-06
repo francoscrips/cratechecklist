@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wooden Crate Inspection List</title>
+    <title>wooden crate inspection list</title>
     <style>
         :root {
             --primary: #1e3a8a;
@@ -61,6 +61,7 @@
             color: var(--primary);
             margin: 0 0 2px 0;
             font-weight: 800;
+            text-transform: lowercase;
             letter-spacing: -0.5px;
         }
         .author-tag {
@@ -341,9 +342,9 @@
 
         let isCollapsed = false;
 
-        // Populate Dropdown 1 to 50
+        // Populate Dropdown 1 to 10
         const qtySelect = document.getElementById('input-qty');
-        for (let i = 1; i <= 50; i++) {
+        for (let i = 1; i <= 10; i++) {
             let opt = document.createElement('option');
             opt.value = i;
             opt.textContent = i;
