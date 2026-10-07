@@ -208,8 +208,6 @@
             .crate-card.compact-card .crate-title {
                 font-size: 12pt;
             }
-            
-            /* The title and LPN are already row-aligned, no extra flex code needed here anymore */
         }
 
         #print-area { display: none; }
@@ -389,7 +387,13 @@
             opt.textContent = i;
             qtySelect.appendChild(opt);
         }
-        document.getElementById('input-date').valueAsDate = new Date();
+        
+        // Force bulletproof local date (Today)
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        document.getElementById('input-date').value = `${yyyy}-${mm}-${dd}`;
 
         // Dynamically add/remove cards so data is NEVER erased
         function updateCrateCount() {
@@ -528,7 +532,15 @@
         function buildPrintDOM() {
             const inspector = document.getElementById('input-inspector').value || '__________________';
             const orderNum = document.getElementById('input-order').value || '__________________';
-            const dateVal = document.getElementById('input-date').value || new Date().toISOString().split('T')[0];
+            
+            // Format the date to Day-Month-Year for printing
+            let rawDate = document.getElementById('input-date').value;
+            let dateVal = '__________________';
+            if (rawDate) {
+                const [year, month, day] = rawDate.split('-');
+                dateVal = `${day}-${month}-${year}`;
+            }
+
             const cards = document.querySelectorAll('.crate-card');
             const printArea = document.getElementById('print-area');
             
