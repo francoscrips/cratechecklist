@@ -126,6 +126,12 @@
         }
         .btn-pass-all:hover { background: var(--success-hover); }
 
+        .btn-collapse {
+            background: var(--gray-700);
+            margin-top: 5px;
+        }
+        .btn-collapse:hover { background: var(--gray-800); }
+
         .btn-print {
             background: var(--primary);
             font-size: 15px;
@@ -145,19 +151,33 @@
             transition: all 0.2s ease;
         }
 
+        /* ALIGN TITLE AND LPN IN ONE ROW ALWAYS */
         .crate-top {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
+            align-items: center;
+            margin-bottom: 12px;
         }
 
         .crate-title {
-            margin: 0 0 12px 0;
+            margin: 0 15px 0 0;
             font-size: 14pt;
             color: var(--primary);
+            white-space: nowrap;
         }
 
         .lpn-group {
-            margin-bottom: 12px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 0;
+            flex: 1;
+        }
+
+        .lpn-group label {
+            margin-bottom: 0;
+            white-space: nowrap;
         }
 
         .checklist-table {
@@ -185,29 +205,11 @@
                 margin-bottom: 10px;
             }
             
-            .crate-card.compact-card .crate-top {
-                flex-direction: row;
-                align-items: center;
-            }
-            
             .crate-card.compact-card .crate-title {
-                margin: 0 15px 0 0;
                 font-size: 12pt;
-                white-space: nowrap;
             }
             
-            .crate-card.compact-card .lpn-group {
-                margin-bottom: 0;
-                flex-direction: row;
-                align-items: center;
-                gap: 10px;
-                flex: 1;
-            }
-            
-            .crate-card.compact-card .lpn-group label {
-                margin-bottom: 0;
-                white-space: nowrap;
-            }
+            /* The title and LPN are already row-aligned, no extra flex code needed here anymore */
         }
 
         #print-area { display: none; }
@@ -350,7 +352,9 @@
                 <select id="input-qty" onchange="updateCrateCount()"></select>
             </div>
 
+            <!-- BUTTONS SEPARATED FOR CLARITY -->
             <button class="btn-action btn-pass-all" onclick="passAllCheckpoints()">✔ Pass All Checkpoints</button>
+            <button class="btn-action btn-collapse" id="btn-collapse" onclick="toggleCollapseForms()">Collapse all forms and keep LPN's</button>
 
             <!-- Button points to the custom triggerPrint function -->
             <button class="btn-action btn-print" onclick="triggerPrint()">Print Dual-Copy Sheets</button>
@@ -440,11 +444,10 @@
                     `;
                     wrapper.appendChild(card);
 
-                    // If currently collapsed, apply the collapse rules instantly to the new cards
+                    // If currently collapsed, apply the collapse visual rules instantly to the new cards
                     if (isCollapsed) {
                         card.querySelector('.checklist-table').classList.add('collapsed-view');
                         card.querySelector('.notes-group').classList.add('collapsed-view');
-                        card.querySelectorAll('input[type="radio"][value="Pass"]').forEach(r => r.checked = true);
                     }
                 }
             } else if (qty < currentCount) {
@@ -455,29 +458,31 @@
             }
         }
 
-        // Collapse table and auto-pass
+        // Just checks all Pass radios
         function passAllCheckpoints() {
+            document.querySelectorAll('input[type="radio"][value="Pass"]').forEach(radio => radio.checked = true);
+        }
+
+        // Toggles visibility of the forms/notes to save space
+        function toggleCollapseForms() {
             isCollapsed = !isCollapsed;
-            const btn = document.querySelector('.btn-pass-all');
+            const btn = document.getElementById('btn-collapse');
             const cards = document.querySelectorAll('.crate-card');
             const tables = document.querySelectorAll('.checklist-table');
             const notes = document.querySelectorAll('.notes-group');
 
             if (isCollapsed) {
-                document.querySelectorAll('input[type="radio"][value="Pass"]').forEach(radio => radio.checked = true);
                 cards.forEach(c => c.classList.add('compact-card'));
                 tables.forEach(t => t.classList.add('collapsed-view'));
                 notes.forEach(n => n.classList.add('collapsed-view'));
                 
-                btn.innerHTML = '✎ Show Checklists';
-                btn.style.backgroundColor = 'var(--gray-700)';
+                btn.innerHTML = '✎ Expand all forms';
             } else {
                 cards.forEach(c => c.classList.remove('compact-card'));
                 tables.forEach(t => t.classList.remove('collapsed-view'));
                 notes.forEach(n => n.classList.remove('collapsed-view'));
                 
-                btn.innerHTML = '✔ Pass All Checkpoints';
-                btn.style.backgroundColor = 'var(--success)';
+                btn.innerHTML = "Collapse all forms and keep LPN's";
             }
         }
 
